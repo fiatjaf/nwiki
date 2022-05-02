@@ -92,15 +92,29 @@ edit:
 		return
 	}
 	defer tmp.Close()
-	content, err := ioutil.ReadAll(tmp)
+	data, err := ioutil.ReadAll(tmp)
 	if err != nil {
 		log.Println("Failed to read file contents after editing: ", err.Error())
+		return
+	}
+	content := string(data)
+
+	// do nothing if empty
+	isEmpty := true
+	for _, line := range strings.Split(content, "\n") {
+		if strings.TrimSpace(line) != "" {
+			isEmpty = false
+			break
+		}
+	}
+	if isEmpty {
+		log.Println("Empty article. Doing nothing.")
 		return
 	}
 
 	// publish article
 	if evt, status, err := pool.PublishEvent(&nostr.Event{
-		Content:   string(content),
+		Content:   content,
 		CreatedAt: time.Now(),
 		Tags:      nostr.Tags{[]string{"w", article}},
 		Kind:      KIND_WIKI,
