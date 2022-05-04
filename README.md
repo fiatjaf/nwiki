@@ -31,4 +31,4 @@ You'll be shown with all the article versions from people on your configured rel
 
 ## Video Demo
 
-[![asciicast](https://asciinema.org/a/dtrzdbg7BnMq0hUMzDE3F6yDe.svg)](https://asciinema.org/a/dtrzdbg7BnMq0hUMzDE3F6yDe)
+[![asciicast](https://asciinema.org/a/9VxZEWV0MDUUsBAkKqgYaQH0P.svg)](https://asciinema.org/a/9VxZEWV0MDUUsBAkKqgYaQH0P)
