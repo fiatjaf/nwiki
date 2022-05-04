@@ -2,6 +2,8 @@ package main
 
 import (
 	"strings"
+
+	"github.com/fiatjaf/go-nostr"
 )
 
 func shortenKey(key string) string {
@@ -19,4 +21,14 @@ func shortenText(text string, maxChars int) string {
 	}
 
 	return text[0:maxChars-1] + "…"
+}
+
+func getMatchingPubKey(pubkey string, events []*nostr.Event) (int, *nostr.Event) {
+	for i, evt := range events {
+		if evt.PubKey == pubkey {
+			return i, evt
+		}
+	}
+
+	return -1, nil
 }

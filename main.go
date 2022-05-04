@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/fiatjaf/go-nostr"
 	"github.com/jroimartin/gocui"
 	"github.com/mitchellh/go-homedir"
@@ -30,6 +31,8 @@ var (
 	selected       = 0
 	queuedMessages = make([]string, 0, 1)
 )
+
+var instructionsColor = color.New(color.FgYellow)
 
 func main() {
 	// args
@@ -88,7 +91,7 @@ func startMainLoop() {
 	if err := g.SetKeybinding(VIEW_VERSIONS, gocui.KeyArrowDown, gocui.ModNone, moveSelection(1)); err != nil {
 		log.Fatal(err)
 	}
-	if err := g.SetKeybinding(VIEW_VERSIONS, gocui.KeyEnter, gocui.ModNone, selectVersion); err != nil {
+	if err := g.SetKeybinding(VIEW_VERSIONS, gocui.KeyEnter, gocui.ModNone, selectVersionToEdit); err != nil {
 		log.Fatal(err)
 	}
 
@@ -113,12 +116,12 @@ func (p PauseMainLoop) Error() string { return "pause-main-loop" }
 
 func layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
-	if v, err := g.SetView(VIEW_VERSIONS, 0, 0, maxX/3, maxY*3/4); err != nil {
+	if v, err := g.SetView(VIEW_VERSIONS, 0, 0, maxX/3, maxY*3/5); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
 		fmt.Fprint(v, "loading available articles...\n")
-		v.Title = fmt.Sprintf("\"%s\"", article)
+		v.Title = fmt.Sprintf("\"%s\" results", article)
 	}
 	if v, err := g.SetView(VIEW_CONTENT, maxX/3+1, 0, maxX-1, maxY-1); err != nil {
 		if err != gocui.ErrUnknownView {
@@ -128,7 +131,7 @@ func layout(g *gocui.Gui) error {
 		v.Autoscroll = true
 		v.Wrap = true
 	}
-	if v, err := g.SetView(VIEW_CONTROL, 0, maxY*3/4, maxX/3, maxY-1); err != nil {
+	if v, err := g.SetView(VIEW_CONTROL, 0, maxY*3/5, maxX/3, maxY-1); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
@@ -138,8 +141,8 @@ func layout(g *gocui.Gui) error {
 		}
 		queuedMessages = make([]string, 0, 1)
 		fmt.Fprintln(v, "")
-		fmt.Fprintln(v, "> Use the arrow keys to select, Enter to edit on your local editor.")
-		fmt.Fprintln(v, "> If no articles are found, Enter will give you the chance to create a new one.")
+		instructionsColor.Fprintln(v, "> Use the arrow keys to select, Enter to edit on your local editor.")
+		instructionsColor.Fprintln(v, "> If no articles are found, Enter will give you the chance to create a new one.")
 
 		v.Wrap = true
 	}
@@ -165,6 +168,10 @@ func logToView(g *gocui.Gui, fmessage string, args ...interface{}) {
 		v.Write(contents)
 		return nil
 	})
+}
+
+func queueLogToView(fmessage string, args ...interface{}) {
+	queuedMessages = append(queuedMessages, fmt.Sprintf(fmessage, args...))
 }
 
 func quit(g *gocui.Gui, v *gocui.View) error {
