@@ -37,7 +37,7 @@ var (
 
 var (
 	instructionsColor = color.New(color.FgYellow)
-	infoColor         = color.New(color.Bold).Add(color.FgHiBlue)
+	infoColor         = color.New(color.Bold).Add(color.FgBlue)
 	titleColor        = color.New(color.Bold).Add(color.FgCyan)
 	metaColor         = color.New(color.FgYellow)
 	textColor         = color.New(color.FgWhite)
