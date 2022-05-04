@@ -10,7 +10,7 @@ import (
 var titleColor = color.New(color.Bold).Add(color.FgCyan)
 var metaColor = color.New(color.FgYellow)
 var textColor = color.New(color.FgWhite)
-var separatorColor = color.New(color.BgWhite)
+var separatorColor = color.New(color.FgMagenta)
 
 func renderContent(g *gocui.Gui) {
 	g.Update(func(g *gocui.Gui) error {
