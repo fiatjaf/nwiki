@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -137,12 +138,33 @@ func layout(g *gocui.Gui) error {
 		}
 		queuedMessages = make([]string, 0, 1)
 		fmt.Fprintln(v, "")
-		fmt.Fprintln(v, "- Use the arrow keys to select, Enter to edit on your local editor.")
-		fmt.Fprintln(v, "- If no articles are found, Enter will give you the chance to create a new one.")
+		fmt.Fprintln(v, "> Use the arrow keys to select, Enter to edit on your local editor.")
+		fmt.Fprintln(v, "> If no articles are found, Enter will give you the chance to create a new one.")
 
 		v.Wrap = true
 	}
 	return nil
+}
+
+func logToView(g *gocui.Gui, fmessage string, args ...interface{}) {
+	g.Update(func(g *gocui.Gui) error {
+		v, err := g.View(VIEW_CONTROL)
+		if err != nil {
+			return err
+		}
+
+		contents, err := ioutil.ReadAll(v)
+		if err != nil {
+			return err
+		}
+
+		v.Clear()
+
+		message := fmt.Sprintf(fmessage, args...)
+		fmt.Fprintf(v, "- %s\n", message)
+		v.Write(contents)
+		return nil
+	})
 }
 
 func quit(g *gocui.Gui, v *gocui.View) error {
