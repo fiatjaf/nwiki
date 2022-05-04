@@ -3,12 +3,10 @@ module github.com/fiatjaf/nwiki
 go 1.17
 
 require (
-	github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815
 	github.com/fatih/color v1.13.0
-	github.com/fiatjaf/go-nostr v0.7.1
+	github.com/fiatjaf/go-nostr v0.7.2
 	github.com/jroimartin/gocui v0.5.0
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/wayneashleyberry/terminal-dimensions v1.1.0
 )
 
 require (

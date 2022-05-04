@@ -1,16 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
-	"github.com/fatih/color"
 	"github.com/jroimartin/gocui"
 )
-
-var titleColor = color.New(color.Bold).Add(color.FgCyan)
-var metaColor = color.New(color.FgYellow)
-var textColor = color.New(color.FgWhite)
-var separatorColor = color.New(color.FgMagenta)
 
 func renderContent(g *gocui.Gui) {
 	g.Update(func(g *gocui.Gui) error {
@@ -33,10 +28,16 @@ func renderContent(g *gocui.Gui) {
 			titleSeparator += "="
 		}
 
+		author := evt.PubKey
+		name := authorName(evt.PubKey)
+		if name != shortenKey(evt.PubKey) {
+			author += fmt.Sprintf(" (%s)", name)
+		}
+
 		titleColor.Fprint(v, strings.ToUpper(article)+"\n")
 		separatorColor.Fprint(v, titleSeparator)
 		metaColor.Fprintf(v, "\n\nauthored by: %s\nat %s\n",
-			evt.PubKey,
+			author,
 			evt.CreatedAt.Format("Jan 2 15:04"),
 		)
 		separatorColor.Fprint(v, "\n---\n")

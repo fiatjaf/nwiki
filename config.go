@@ -8,6 +8,16 @@ type Config struct {
 	PrivateKey string            `json:"privatekey,omitempty"`
 }
 
+func (c Config) RelaysList() []string {
+	list := make([]string, len(c.Relays))
+	i := 0
+	for u, _ := range c.Relays {
+		list[i] = u
+		i++
+	}
+	return list
+}
+
 type Policy struct {
 	Read  bool `json:"read"`
 	Write bool `json:"write"`

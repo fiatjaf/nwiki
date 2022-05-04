@@ -32,3 +32,13 @@ func getMatchingPubKey(pubkey string, events []*nostr.Event) (int, *nostr.Event)
 
 	return -1, nil
 }
+
+func stringExists(needle string, haystack []string) bool {
+	for _, hay := range haystack {
+		if hay == needle {
+			return true
+		}
+	}
+
+	return false
+}

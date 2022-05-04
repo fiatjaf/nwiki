@@ -4,13 +4,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/fatih/color"
 	"github.com/fiatjaf/go-nostr"
 	"github.com/jroimartin/gocui"
 )
-
-var colorNormal = color.New(color.FgWhite)
-var colorSelected = color.New(color.FgBlack).Add(color.BgCyan).Add(color.Bold)
 
 func listVersions(g *gocui.Gui, article string) {
 	initNostr()
@@ -34,6 +30,7 @@ func listVersions(g *gocui.Gui, article string) {
 		removeOldFromSameAuthor(g)
 		renderVersions(g)
 		renderContent(g)
+		gatherNames(g)
 	}
 }
 
@@ -95,7 +92,7 @@ func renderVersions(g *gocui.Gui) {
 			}
 
 			_, err = c.Fprintf(v, "%s at %s: %s\n",
-				shortenKey(evt.PubKey),
+				authorName(evt.PubKey),
 				evt.CreatedAt.Format("Jan 02 15:04"),
 				strings.TrimSpace(shortenText(evt.Content, viewX-28)),
 			)
