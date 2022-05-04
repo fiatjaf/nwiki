@@ -102,7 +102,7 @@ func callExternalEditorAndPublish(tmp *os.File, content string, unpauser chan st
 
 	// publish article to relays
 	if evt, status, err := pool.PublishEvent(&nostr.Event{
-		Content:   content,
+		Content:   newContent,
 		CreatedAt: time.Now(),
 		Tags:      nostr.Tags{[]string{"w", article}},
 		Kind:      KIND_WIKI,
