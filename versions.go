@@ -70,7 +70,13 @@ func selectVersion(g *gocui.Gui, v *gocui.View) error {
 		log.Println("Failed to create temporary file: ", err.Error())
 		return err
 	}
-	if _, err := tmp.WriteString(events[selected].Content); err != nil {
+
+	var content string
+	if selected < len(events) {
+		content = events[selected].Content
+	}
+
+	if _, err := tmp.WriteString(content); err != nil {
 		log.Println("Failed to write temporary file: ", err.Error())
 		return err
 	}
@@ -101,6 +107,7 @@ func selectVersion(g *gocui.Gui, v *gocui.View) error {
 		output, _ := cmd.CombinedOutput()
 		log.Printf(string(output))
 		log.Printf("Failed to wait editor (%s): %s\n", editor, err.Error())
+		return err
 	}
 
 	tmp, err = os.Open(tmpName)
@@ -114,22 +121,27 @@ func selectVersion(g *gocui.Gui, v *gocui.View) error {
 		log.Println("Failed to read file contents after editing: ", err.Error())
 		return err
 	}
-	content := string(data)
+	newContent := string(data)
 
 	unpauser := make(chan struct{})
 	go func() {
-		// do nothing if empty
-		isEmpty := true
-		for _, line := range strings.Split(content, "\n") {
+		// do nothing if empty or unchanged
+		shouldPublish := false
+		for _, line := range strings.Split(newContent, "\n") {
 			if strings.TrimSpace(line) != "" {
-				isEmpty = false
+				shouldPublish = true
 				break
 			}
 		}
-		if isEmpty {
-			fmt.Println("Empty article. Doing nothing.")
-			time.Sleep(2 * time.Second)
-		} else {
+		if !shouldPublish {
+			queuedMessages = append(queuedMessages, "Empty content. Won't publish.")
+		}
+		if newContent == content {
+			shouldPublish = false
+			queuedMessages = append(queuedMessages, "Unchanged content. Won't publish.")
+		}
+
+		if shouldPublish {
 			// publish article
 			if evt, status, err := pool.PublishEvent(&nostr.Event{
 				Content:   content,

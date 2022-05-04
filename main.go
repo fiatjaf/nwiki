@@ -20,12 +20,14 @@ const (
 
 	VIEW_VERSIONS = "versions"
 	VIEW_CONTENT  = "content"
+	VIEW_CONTROL  = "control"
 )
 
 var (
-	article  string
-	events   []*nostr.Event
-	selected = 0
+	article        string
+	events         []*nostr.Event
+	selected       = 0
+	queuedMessages = make([]string, 0, 1)
 )
 
 func main() {
@@ -110,20 +112,35 @@ func (p PauseMainLoop) Error() string { return "pause-main-loop" }
 
 func layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
-	if v, err := g.SetView(VIEW_VERSIONS, 0, 0, maxX/3, maxY-1); err != nil {
+	if v, err := g.SetView(VIEW_VERSIONS, 0, 0, maxX/3, maxY*3/4); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		fmt.Fprint(v, "loading available articles...")
-		v.Title = article
+		fmt.Fprint(v, "loading available articles...\n")
+		v.Title = fmt.Sprintf("\"%s\"", article)
 	}
 	if v, err := g.SetView(VIEW_CONTENT, maxX/3+1, 0, maxX-1, maxY-1); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
 
-		v.Editor = gocui.DefaultEditor
-		v.Editable = true
+		v.Autoscroll = true
+		v.Wrap = true
+	}
+	if v, err := g.SetView(VIEW_CONTROL, 0, maxY*3/4, maxX/3, maxY-1); err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+
+		for _, message := range queuedMessages {
+			fmt.Fprintln(v, message)
+		}
+		queuedMessages = make([]string, 0, 1)
+		fmt.Fprintln(v, "")
+		fmt.Fprintln(v, "- Use the arrow keys to select, Enter to edit on your local editor.")
+		fmt.Fprintln(v, "- If no articles are found, Enter will give you the chance to create a new one.")
+
+		v.Wrap = true
 	}
 	return nil
 }
