@@ -37,10 +37,32 @@ func listVersions(g *gocui.Gui, article string) {
 		events = append(events, &evt)
 
 		sortVersions()
-		// removeOldFromSameAuthor() TODO
+		removeOldFromSameAuthor()
 		renderVersions(g)
 		renderContent(g)
 	}
+}
+
+func removeOldFromSameAuthor() {
+	filteredEvents := make([]*nostr.Event, 0, len(events))
+	for _, event := range events {
+		for f, filtered := range filteredEvents {
+			if filtered.PubKey == event.PubKey {
+				if event.CreatedAt.After(filtered.CreatedAt) {
+					filteredEvents[f] = event
+				}
+				goto nextEvent
+			}
+		}
+
+		// we didn't find any matching pubkey
+		filteredEvents = append(filteredEvents, event)
+
+	nextEvent:
+		// we've found a matching pubkey already and either replaced it or not
+		continue
+	}
+	events = filteredEvents
 }
 
 func sortVersions() {
