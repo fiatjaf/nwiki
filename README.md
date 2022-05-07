@@ -3,6 +3,21 @@ nwiki
 
 Command line client for the [Nostr](https://github.com/fiatjaf/nostr) wiki.
 
+## Run in container, without installation
+
+If you don't have `go` installed or don't like installing stuff just to
+quickly try it out, you can easily run this in a `docker` or `podman`
+container:
+
+```
+podman run --rm -it golang bash
+mkdir -p /root/.config/nostr/
+echo '{"relays": {"wss://nostr-pub.wellorder.net": {"read": true,"write": true}},"privatekey": "d2c8bb39f07285067b6d027b3f3a82a07febef57fd9a3c94ed5abde11e29804c"}' > /root/.config/nostr/config.json
+apt update; apt install -y vim
+go install github.com/fiatjaf/nwiki@latest
+nwiki bitcoin
+```
+
 ## Installation
 
 Compile with `go install github.com/fiatjaf/nwiki@latest` or [download a binary](https://github.com/fiatjaf/nwiki/releases).
