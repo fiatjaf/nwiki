@@ -19,6 +19,7 @@ func renderContent(g *gocui.Gui) {
 		}
 
 		v.Clear()
+		v.SetOrigin(0, 0)
 
 		evt := events[selected]
 		v.Title = evt.ID
@@ -45,4 +46,25 @@ func renderContent(g *gocui.Gui) {
 
 		return nil
 	})
+}
+
+func scroll(direction int) func(*gocui.Gui, *gocui.View) error {
+	return func(g *gocui.Gui, v *gocui.View) error {
+		v, err := g.View(VIEW_CONTENT)
+		if err != nil {
+			return err
+		}
+
+		_, y := v.Size()
+		l := len(v.BufferLines())
+		_, o := v.Origin()
+		newOrigin := o + direction*5
+		if newOrigin < 0 {
+			newOrigin = 0
+		} else if newOrigin > l-y {
+			newOrigin = l - y
+		}
+
+		return v.SetOrigin(0, newOrigin)
+	}
 }

@@ -106,6 +106,12 @@ func startMainLoop() {
 	if err := g.SetKeybinding(VIEW_VERSIONS, gocui.KeyEnter, gocui.ModNone, selectVersionToEdit); err != nil {
 		log.Fatal(err)
 	}
+	if err := g.SetKeybinding("", gocui.KeyPgdn, gocui.ModNone, scroll(1)); err != nil {
+		log.Fatal(err)
+	}
+	if err := g.SetKeybinding("", gocui.KeyPgup, gocui.ModNone, scroll(-1)); err != nil {
+		log.Fatal(err)
+	}
 
 	if err := g.MainLoop(); err != nil {
 		if pause, ok := err.(PauseMainLoop); ok {
@@ -198,7 +204,9 @@ func writeInitialMessages(v *gocui.View) {
 	infoColor.Fprintf(v, "pubkey: %v\n", pubkey)
 	infoColor.Fprintf(v, "relays: %v\n", config.RelaysList())
 	separatorColor.Fprintln(v, "---")
-	instructionsColor.Fprintln(v, "> Use the arrow keys to select, Enter to edit on your local editor.")
+	instructionsColor.Fprintln(v, "> Use the arrow keys to select")
+	instructionsColor.Fprintln(v, "> Press Enter to edit on your local editor.")
+	instructionsColor.Fprintln(v, "> PageUp and PageDown scroll the content.")
 	instructionsColor.Fprintln(v, "> If no articles are found, Enter will give you the chance to create a new one.")
 }
 
