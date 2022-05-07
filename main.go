@@ -140,7 +140,7 @@ func layout(g *gocui.Gui) error {
 			return err
 		}
 
-		v.Autoscroll = true
+		v.Autoscroll = false
 		v.Wrap = true
 	}
 	if v, err := g.SetView(VIEW_CONTROL, 0, maxY*3/5, maxX/3, maxY-1); err != nil {

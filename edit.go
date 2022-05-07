@@ -79,7 +79,7 @@ func callExternalEditorAndPublish(tmp *os.File, content string, unpauser chan st
 		log.Println("Failed to read file contents after editing: ", err.Error())
 		return
 	}
-	newContent := strings.TrimSpace(string(data))
+	newContent := normalizeContent(string(data))
 
 	// do nothing if empty or unchanged
 	isEmpty := true
@@ -95,7 +95,7 @@ func callExternalEditorAndPublish(tmp *os.File, content string, unpauser chan st
 		return
 	}
 
-	if newContent == strings.TrimSpace(content) {
+	if newContent == content {
 		queueLogToView("Unchanged content. Won't publish.")
 		return
 	}

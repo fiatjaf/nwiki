@@ -2,7 +2,6 @@ package main
 
 import (
 	"sort"
-	"strings"
 
 	"github.com/fiatjaf/go-nostr"
 	"github.com/jroimartin/gocui"
@@ -24,6 +23,7 @@ func listVersions(g *gocui.Gui, article string) {
 		}
 
 		evt := <-sub.UniqueEvents
+		evt.Content = normalizeContent(evt.Content)
 		events = append(events, &evt)
 
 		sortVersions()
@@ -94,7 +94,7 @@ func renderVersions(g *gocui.Gui) {
 			_, err = c.Fprintf(v, "%s at %s: %s\n",
 				authorName(evt.PubKey),
 				evt.CreatedAt.Format("Jan 02 15:04"),
-				strings.TrimSpace(shortenText(evt.Content, viewX-28)),
+				shortenText(evt.Content, viewX-28),
 			)
 			if err != nil {
 				return err

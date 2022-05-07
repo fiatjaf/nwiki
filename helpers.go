@@ -1,10 +1,27 @@
 package main
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/fiatjaf/go-nostr"
 )
+
+var (
+	newlines = regexp.MustCompile("\n\n+")
+	spaces   = regexp.MustCompile(" +")
+)
+
+func normalizeContent(content string) string {
+	return strings.TrimSpace(
+		newlines.ReplaceAllString(
+			spaces.ReplaceAllString(
+				content,
+				" ",
+			),
+			"\n\n"),
+	)
+}
 
 func shortenKey(key string) string {
 	return key[0:4] + "…" + key[len(key)-3:]
