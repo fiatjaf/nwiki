@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -10,17 +11,16 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/fatih/color"
-	"github.com/fiatjaf/go-nostr"
 	"github.com/jroimartin/gocui"
 	"github.com/mitchellh/go-homedir"
+	"github.com/nbd-wtf/go-nostr"
+	"github.com/puzpuzpuz/xsync/v2"
 )
 
 const (
-	KIND_WIKI       = 17
-	KIND_REPUTATION = 16
+	KIND_WIKI = 30818
 
 	VIEW_VERSIONS = "versions"
 	VIEW_CONTENT  = "content"
@@ -31,8 +31,9 @@ var (
 	article        string
 	events         []*nostr.Event
 	selected       = 0
-	metadata       = sync.Map{} // { [pubkey]: *nostr.Event }
+	metadata       = xsync.NewMapOf[*nostr.Event]()
 	queuedMessages = make([]string, 0, 1)
+	ctx            = context.Background()
 )
 
 var (
@@ -72,7 +73,6 @@ func main() {
 		log.Fatal("can't parse config file " + path + ": " + err.Error())
 		return
 	}
-	config.Init()
 
 	// run main loop
 	startMainLoop()
@@ -202,7 +202,7 @@ func writeInitialMessages(v *gocui.View) {
 	separatorColor.Fprintln(v, "---")
 	pubkey, _ := nostr.GetPublicKey(config.PrivateKey)
 	infoColor.Fprintf(v, "pubkey: %v\n", pubkey)
-	infoColor.Fprintf(v, "relays: %v\n", config.RelaysList())
+	infoColor.Fprintf(v, "relays: %v\n", config.Relays)
 	separatorColor.Fprintln(v, "---")
 	instructionsColor.Fprintln(v, "> Use the arrow keys to select")
 	instructionsColor.Fprintln(v, "> Press Enter to edit on your local editor.")

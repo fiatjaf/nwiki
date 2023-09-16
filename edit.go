@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -9,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fiatjaf/go-nostr"
 	"github.com/jroimartin/gocui"
+	"github.com/nbd-wtf/go-nostr"
 )
 
 func selectVersionToEdit(g *gocui.Gui, v *gocui.View) error {
@@ -100,28 +99,31 @@ func callExternalEditorAndPublish(tmp *os.File, content string, unpauser chan st
 		return
 	}
 
-	// publish article to relays
-	if evt, status, err := pool.PublishEvent(&nostr.Event{
+	evt := nostr.Event{
 		Content:   newContent,
-		CreatedAt: time.Now(),
-		Tags:      nostr.Tags{[]string{"w", article}},
-		Kind:      KIND_WIKI,
-	}); err != nil {
-		fmt.Printf("Error publishing: %s.\n", err.Error())
-		time.Sleep(2 * time.Second)
-	} else {
-		fmt.Printf("Event %s sent.\n", evt.ID)
-		timeout := time.After(3 * time.Second)
-		for {
-			select {
-			case s := <-status:
-				fmt.Printf("  - %s: %s\n", s.Relay, s.Status)
-			case <-timeout:
-				goto unpause
-			}
-		}
+		CreatedAt: nostr.Now(),
+		Tags: nostr.Tags{
+			nostr.Tag{"d", strings.ToLower(article)},
+		},
+		Kind: KIND_WIKI,
+	}
+	if err := evt.Sign(config.PrivateKey); err != nil {
+		queueLogToView("failed to sign event: %s", err)
+		return
 	}
 
-unpause:
-	unpauser <- struct{}{}
+	for _, url := range config.Relays {
+		r, err := pool.EnsureRelay(url)
+		if err != nil {
+			queueLogToView("failed to connect to '%s': %s", url, err)
+			continue
+		}
+
+		if _, err := r.Publish(ctx, evt); err != nil {
+			queueLogToView("error publishing: %s", err.Error())
+			time.Sleep(2 * time.Second)
+		} else {
+			queueLogToView("event %s sent.", evt.ID)
+		}
+	}
 }

@@ -1,18 +1,21 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sync"
+	"time"
 
-	"github.com/fiatjaf/go-nostr"
-	"github.com/fiatjaf/go-nostr/nip05"
 	"github.com/jroimartin/gocui"
+	"github.com/nbd-wtf/go-nostr"
+	"github.com/nbd-wtf/go-nostr/nip05"
 )
 
-var pubkeys []string
-var namesSub *nostr.Subscription
-var nip05Cache = sync.Map{} // { [identifier]: boolean }
+var (
+	pubkeys    []string
+	nip05Cache = sync.Map{} // { [identifier]: boolean }
+)
 
 func gatherNames(g *gocui.Gui) {
 	for _, evt := range events {
@@ -22,36 +25,20 @@ func gatherNames(g *gocui.Gui) {
 			continue
 		}
 
-		pubkeys = append(pubkeys, evt.PubKey)
-		filters := nostr.Filters{
-			{
-				Kinds:   []int{nostr.KindSetMetadata},
-				Authors: pubkeys,
-			},
-		}
+		ctx, cancel := context.WithTimeout(ctx, time.Second*3)
+		evt := pool.QuerySingle(ctx, config.Relays, nostr.Filter{Kinds: []int{0}, Authors: []string{evt.PubKey}})
+		cancel()
 
-		if namesSub != nil {
-			namesSub.Sub(filters)
-		} else {
-			namesSub = pool.Sub(filters)
-		}
-	}
-
-	go listenForNames(g)
-}
-
-func listenForNames(g *gocui.Gui) {
-	for evt := range namesSub.UniqueEvents {
 		iexisting, exists := metadata.Load(evt.PubKey)
-		if !exists || evt.CreatedAt.After(iexisting.(*nostr.Event).CreatedAt) {
-			metadata.Store(evt.PubKey, &evt)
+		if !exists || evt.CreatedAt > iexisting.CreatedAt {
+			metadata.Store(evt.PubKey, evt)
 			renderVersions(g)
 			renderContent(g)
 		}
 	}
 }
 
-func nameFromMetadataEvent(event *nostr.Event) string {
+func nameFromMetadataEvent(ctx context.Context, event *nostr.Event) string {
 	var data struct {
 		Name  string `json:"name"`
 		Nip05 string `json:"nip05"`
@@ -62,15 +49,21 @@ func nameFromMetadataEvent(event *nostr.Event) string {
 	if data.Nip05 != "" {
 		if valid, cached := nip05Cache.Load(data.Nip05); !cached {
 			// if not cached query HTTPS
-			result := nip05.QueryIdentifier(data.Nip05)
-
-			// will be true if this pubkey matches the one from the event
-			valid := result == event.PubKey
+			result, err := nip05.QueryIdentifier(ctx, data.Nip05)
+			var valid bool
+			if err == nil {
+				// will be true if this pubkey matches the one from the event
+				valid = result.PublicKey == event.PubKey
+			} else {
+				valid = false
+			}
 
 			// cache it
 			nip05Cache.Store(data.Nip05, valid)
 
-			return nip05.NormalizeIdentifier(data.Nip05)
+			if valid {
+				return nip05.NormalizeIdentifier(data.Nip05)
+			}
 		} else {
 			// otherwise reuse the result from the previous call
 			if valid.(bool) {
@@ -88,9 +81,9 @@ func nameFromMetadataEvent(event *nostr.Event) string {
 	return ""
 }
 
-func authorName(pubkey string) string {
+func authorName(ctx context.Context, pubkey string) string {
 	if metadataEvent, ok := metadata.Load(pubkey); ok {
-		name := nameFromMetadataEvent(metadataEvent.(*nostr.Event))
+		name := nameFromMetadataEvent(ctx, metadataEvent)
 		if name != "" {
 			return name
 		}

@@ -30,7 +30,7 @@ func renderContent(g *gocui.Gui) {
 		}
 
 		author := evt.PubKey
-		name := authorName(evt.PubKey)
+		name := authorName(ctx, evt.PubKey)
 		if name != shortenKey(evt.PubKey) {
 			author += fmt.Sprintf(" (%s)", name)
 		}
@@ -39,7 +39,7 @@ func renderContent(g *gocui.Gui) {
 		separatorColor.Fprint(v, titleSeparator)
 		metaColor.Fprintf(v, "\n\nauthored by: %s\nat %s\n",
 			author,
-			evt.CreatedAt.Format("Jan 2 15:04"),
+			evt.CreatedAt.Time().Format("Jan 2 15:04"),
 		)
 		separatorColor.Fprint(v, "\n---\n")
 		textColor.Fprint(v, "\n"+evt.Content)

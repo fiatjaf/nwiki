@@ -3,17 +3,17 @@ package main
 import (
 	"sort"
 
-	"github.com/fiatjaf/go-nostr"
 	"github.com/jroimartin/gocui"
+	"github.com/nbd-wtf/go-nostr"
 )
 
 func listVersions(g *gocui.Gui, article string) {
 	initNostr()
 
-	sub := pool.Sub(nostr.Filters{
+	eventsSub := pool.SubMany(ctx, config.Relays, nostr.Filters{
 		{
 			Kinds: []int{KIND_WIKI},
-			Tags:  nostr.TagMap{"w": []string{article}},
+			Tags:  nostr.TagMap{"d": []string{article}},
 		},
 	})
 
@@ -22,9 +22,13 @@ func listVersions(g *gocui.Gui, article string) {
 			g.SetCurrentView(VIEW_VERSIONS)
 		}
 
-		evt := <-sub.UniqueEvents
+		evt := <-eventsSub
+		if evt == nil {
+			return
+		}
+
 		evt.Content = normalizeContent(evt.Content)
-		events = append(events, &evt)
+		events = append(events, evt)
 
 		sortVersions()
 		removeOldFromSameAuthor(g)
@@ -44,7 +48,7 @@ func removeOldFromSameAuthor(g *gocui.Gui) {
 			filteredEvents = append(filteredEvents, event)
 		} else {
 			// we got a matching pubkey, so either discard or replace
-			if event.CreatedAt.After(found.CreatedAt) {
+			if event.CreatedAt > found.CreatedAt {
 				filteredEvents[f] = event
 			}
 		}
@@ -55,7 +59,7 @@ func removeOldFromSameAuthor(g *gocui.Gui) {
 
 func sortVersions() {
 	sort.Slice(events, func(i, j int) bool {
-		return events[i].CreatedAt.After(events[j].CreatedAt)
+		return events[i].CreatedAt > events[j].CreatedAt
 	})
 }
 
@@ -92,8 +96,8 @@ func renderVersions(g *gocui.Gui) {
 			}
 
 			_, err = c.Fprintf(v, "%s at %s: %s\n",
-				authorName(evt.PubKey),
-				evt.CreatedAt.Format("Jan 02 15:04"),
+				authorName(ctx, evt.PubKey),
+				evt.CreatedAt.Time().Format("Jan 02 15:04"),
 				shortenText(evt.Content, viewX-28),
 			)
 			if err != nil {
